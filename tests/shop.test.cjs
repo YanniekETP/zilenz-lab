@@ -70,3 +70,19 @@ test('deelbare link herstelt de gekozen variant', () => {
   assert.match(url,/utm_source=search/);
   assert.deepEqual(C.readQuery(url),selected);
 });
+
+test('koopadvies benoemt voordelen van meer dikte en vezelmassa zonder onbewezen absorptiescores', () => {
+  const C = require('../catalog.js');
+  const thin = C.materialGuidance({ thickness:20, density:40 });
+  const premium = C.materialGuidance({ thickness:80, density:80 });
+  assert.match(thin, /Bekijk ook 50 of 80 mm/);
+  assert.match(premium, /lagere tonen/);
+  assert.match(premium, /meer vezelmassa/);
+  assert.doesNotMatch(thin+premium, /garandeert|meer decibel|NRC/);
+});
+test('upgradeopties komen uit echte beschikbare diktes en dichtheden', () => {
+  const C = require('../catalog.js');
+  const options = C.upgradeSuggestions({thickness:40,density:60,color:'grijs',pack:'plaat'});
+  assert.deepEqual(options.map(x => x.target),[50,80,'doos']);
+  assert.deepEqual(C.upgradeSuggestions({thickness:80,density:80,color:'wit',pack:'pallet'}),[]);
+});
