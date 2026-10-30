@@ -17,7 +17,7 @@ async function select(page,thickness,density,color,pack='plaat') {
 test('homepage toont merk en versienummer direct naast het logo', async ({ page }) => {
   await expect(page.locator('.identity .brand')).toContainText('zilen');
   await expect(page.locator('.identity .version')).toBeVisible();
-  await expect(page.locator('.identity .version')).toHaveText('V3.1');
+  await expect(page.locator('.identity .version')).toHaveText('V3.2');
   await expect(page.locator('h1')).toContainText('Polyesterwol');
 });
 test('configurator bevat alle materiaaleigenschappen en verpakkingen', async ({ page }) => {
@@ -143,4 +143,21 @@ test('vergelijking op mobiel blijft horizontaal scrolbaar zonder pagina-overloop
   expect(dims.scroll).toBeGreaterThan(dims.client);
   const width=await page.evaluate(()=>document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(390);
+});
+
+test('productconfigurator biedt een stap omhoog aan in dikte en dichtheid', async ({page}) => {
+  await select(page,40,40,'grijs');
+  await expect(page.locator('#upgradeOptions')).toContainText('Bekijk 50 mm');
+  await expect(page.locator('#upgradeOptions')).toContainText('Bekijk 60 kg/m³');
+  await page.locator('[data-upgrade-kind="thickness"]').click();
+  await expect(page.locator('#summaryThickness')).toHaveText('50 mm');
+  await page.locator('[data-upgrade-kind="density"]').click();
+  await expect(page.locator('#summaryDensity')).toHaveText('60 kg/m³');
+  await expect(page.locator('#addToQuote')).toBeEnabled();
+});
+test('verkoopgerichte keuzehulp maakt geen ongefundeerde prestatiegaranties', async ({page}) => {
+  await expect(page.locator('#keuzehulp')).toContainText('Meer dikte, meer mogelijkheden');
+  await expect(page.locator('#keuzehulp')).toContainText('Meer vezelmassa per m²');
+  await expect(page.locator('#keuzehulp')).not.toContainText('garantie');
+  await expect(page.locator('.identity .version')).toHaveText('V3.2');
 });
