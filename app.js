@@ -86,8 +86,12 @@
       ['Materiaalvolume / m²', v => number(v.thickness) + ' liter'],
       ['Prijs / m²', () => 'Op aanvraag'],
       ['Akoestische keuzehulp', v => C.materialGuidance(v)]
-    ].map(([name,read]) => '<tr><th scope="row">' + name + '</th>' +
-      compare.map(v => '<td>' + read(v) + '</td>').join('') + '</tr>').join('');
+    ].map(([name,read]) => {
+      const values = compare.map(read);
+      const different = new Set(values).size > 1;
+      return '<tr class="' + (different ? 'diff-row' : '') + '"><th scope="row">' + name + (different ? ' <span class="diff-marker" aria-label="Verschilt per uitvoering">●</span>' : '') + '</th>' +
+        values.map(value => '<td>' + value + '</td>').join('') + '</tr>';
+    }).join('');
     $('compareTable').innerHTML = '<div class="compare-wrap"><table class="compare-table"><caption>Vergelijking van polyesterwol uitvoeringen</caption><thead><tr><th scope="col">Eigenschap</th>' +
       columns + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
