@@ -10,12 +10,19 @@
   const clone = v => ({ thickness: v.thickness, density: v.density, color: v.color, pack: v.pack });
   let selection = C.readQuery(location.search);
   let compare = [];
+  try {
+    const stored = JSON.parse(localStorage.getItem('zilenz-compare-v3') || '[]');
+    if (Array.isArray(stored)) compare = stored.map(C.normalizeSelection).filter(C.isComplete).filter((v,i,arr) => arr.findIndex(x => C.code(x) === C.code(v)) === i).slice(0,3);
+  } catch (_) { compare = []; }
   let quote = [];
   try { quote = C.sanitizeCart(JSON.parse(localStorage.getItem('zilenz-quote-v3') || '[]')); }
   catch (_) { quote = []; }
   function setStatus(id, message) { $(id).textContent = message; }
   function persistQuote() {
     try { localStorage.setItem('zilenz-quote-v3', JSON.stringify(quote)); } catch (_) {}
+  }
+  function persistCompare() {
+    try { localStorage.setItem('zilenz-compare-v3', JSON.stringify(compare)); } catch (_) {}
   }
   function syncUrl() {
     try { history.replaceState(null, '', location.pathname + C.writeQuery(selection, location.search) + location.hash); }
@@ -69,18 +76,23 @@
     }
     const columns = compare.map((v,i) => '<th scope="col">Uitvoering ' + (i+1) +
       '<br><small>' + C.code(v) + '</small><br><button type="button" class="secondary" data-remove-compare="' + i +
-      '" style="margin-top:8px;padding:7px 10px;font-size:12px">Verwijder</button></th>').join('');
+      '" style="margin-top:8px;padding:7px 10px;font-size:12px">Verwijder</button><br><button type="button" class="secondary" data-select-compare="' + i + '" style="margin-top:6px;padding:7px 10px;font-size:12px">Selecteer</button></th>').join('');
     const rows = [
       ['Dikte', v => v.thickness + ' mm'],
       ['Dichtheid', v => v.density + ' kg/m³'],
       ['Kleur', v => colorNames[v.color]],
       ['Verpakking', v => packNames[v.pack]],
       ['Materiaalgewicht / m²', v => number(C.massPerSquareMeter(v)) + ' kg/m²'],
+      ['Materiaalvolume / m²', v => number(v.thickness) + ' liter'],
       ['Prijs / m²', () => 'Op aanvraag'],
       ['Akoestische keuzehulp', v => C.materialGuidance(v)]
-    ].map(([name,read]) => '<tr><th scope="row">' + name + '</th>' +
-      compare.map(v => '<td>' + read(v) + '</td>').join('') + '</tr>').join('');
-    $('compareTable').innerHTML = '<div class="compare-wrap"><table class="compare-table"><thead><tr><th scope="col">Eigenschap</th>' +
+    ].map(([name,read]) => {
+      const values = compare.map(read);
+      const different = new Set(values).size > 1;
+      return '<tr class="' + (different ? 'diff-row' : '') + '"><th scope="row">' + name + (different ? ' <span class="diff-marker" aria-label="Verschilt per uitvoering">●</span>' : '') + '</th>' +
+        values.map(value => '<td>' + value + '</td>').join('') + '</tr>';
+    }).join('');
+    $('compareTable').innerHTML = '<div class="compare-wrap"><table class="compare-table"><caption>Vergelijking van polyesterwol uitvoeringen</caption><thead><tr><th scope="col">Eigenschap</th>' +
       columns + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
   function renderQuote() {
@@ -119,7 +131,16 @@
     }
     if (d.removeCompare !== undefined) {
       compare.splice(Number(d.removeCompare), 1);
-      renderCompare();
+      persistCompare(); renderCompare();
+    }
+    if (d.selectCompare !== undefined) {
+      const chosen = compare[Number(d.selectCompare)];
+      if (chosen) {
+        selection = C.normalizeSelection(chosen);
+        renderSelection(); syncUrl();
+        $('samenstellen').scrollIntoView({ behavior: 'smooth' });
+        setStatus('selectionFeedback', 'Uitvoering uit vergelijking geselecteerd.');
+      }
     }
     if (d.removeQuote) {
       quote = quote.filter(item => C.code(item) !== d.removeQuote);
@@ -139,10 +160,10 @@
       return;
     }
     compare.push(clone(selection));
-    renderCompare();
+    persistCompare(); renderCompare();
     setStatus('selectionFeedback', 'Uitvoering toegevoegd aan de vergelijking.');
   });
-  $('clearCompare').addEventListener('click', () => { compare = []; renderCompare(); });
+  $('clearCompare').addEventListener('click', () => { compare = []; persistCompare(); renderCompare(); });
   $('addToQuote').addEventListener('click', () => {
     const qty = C.quantity($('quantity').value);
     if (!C.isComplete(selection) || qty === null) return;

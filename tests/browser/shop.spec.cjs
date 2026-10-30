@@ -17,7 +17,7 @@ async function select(page,thickness,density,color,pack='plaat') {
 test('homepage toont merk en versienummer direct naast het logo', async ({ page }) => {
   await expect(page.locator('.identity .brand')).toContainText('zilen');
   await expect(page.locator('.identity .version')).toBeVisible();
-  await expect(page.locator('.identity .version')).toHaveText('V3.0');
+  await expect(page.locator('.identity .version')).toHaveText('V3.1');
   await expect(page.locator('h1')).toContainText('Polyesterwol');
 });
 test('configurator bevat alle materiaaleigenschappen en verpakkingen', async ({ page }) => {
@@ -106,4 +106,41 @@ test('mobiel blijven navigatie, versie en configurator bruikbaar', async ({ page
   await expect(page.locator('#addToQuote')).toBeEnabled();
   const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(scrollWidth).toBeLessThanOrEqual(390);
+});
+
+test('vergelijking onthoudt varianten na herladen en markeert verschillen', async ({ page }) => {
+  await select(page,20,40,'wit');
+  await page.locator('#addToCompare').click();
+  await select(page,80,80,'zwart');
+  await page.locator('#addToCompare').click();
+  await expect(page.locator('#compareTable .diff-row')).toHaveCount(6);
+  await page.reload();
+  await expect(page.locator('#compareTable thead th')).toHaveCount(3);
+  await expect(page.locator('#compareTable')).toContainText('6,4 kg/m²');
+  await expect(page.locator('#compareTable')).toContainText('80 liter');
+});
+test('selecteer uitvoering uit vergelijking en wis opgeslagen vergelijking', async ({ page }) => {
+  await select(page,30,60,'grijs','doos');
+  await page.locator('#addToCompare').click();
+  await select(page,50,80,'zwart','pallet');
+  await page.locator('#addToCompare').click();
+  await page.locator('[data-select-compare="0"]').click();
+  await expect(page.locator('#summaryThickness')).toHaveText('30 mm');
+  await expect(page.locator('#summaryDensity')).toHaveText('60 kg/m³');
+  await expect(page.locator('#summaryColor')).toHaveText('Grijs');
+  await expect(page.locator('#summaryPack')).toHaveText('Dozen');
+  await page.locator('#clearCompare').click();
+  await page.reload();
+  await expect(page.locator('#compareTable thead th')).toHaveCount(0);
+});
+test('vergelijking op mobiel blijft horizontaal scrolbaar zonder pagina-overloop', async ({ page }) => {
+  await page.setViewportSize({width:390,height:844});
+  await select(page,20,40,'wit');
+  await page.locator('#addToCompare').click();
+  await select(page,80,80,'zwart');
+  await page.locator('#addToCompare').click();
+  const dims=await page.locator('.compare-wrap').evaluate(el=>({client:el.clientWidth,scroll:el.scrollWidth}));
+  expect(dims.scroll).toBeGreaterThan(dims.client);
+  const width=await page.evaluate(()=>document.documentElement.scrollWidth);
+  expect(width).toBeLessThanOrEqual(390);
 });
