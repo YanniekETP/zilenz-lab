@@ -1,8 +1,8 @@
 {
   "name": "zilenz-lab",
   "private": true,
-  "version": "2.4.0",
-  "description": "Fictieve testwebshop met geautomatiseerde controles",
+  "version": "3.0.0",
+  "description": "Zilenz akoestisch polyesterwol assortiment: variantconfigurator, vergelijking en offerteoverzicht",
   "scripts": {
     "test": "node --test tests/shop.test.cjs",
     "test:browser": "playwright test"

@@ -1,145 +1,72 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const vm = require('node:vm');
-const fs = require('node:fs');
-const path = require('node:path');
+const C = require('../catalog.js');
 
-const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
-assert.ok(script, 'Inline webshop JavaScript moet bestaan');
-
-function setup() {
-  const elements = new Map();
-  const listeners = {};
-  const storage = new Map();
-  const el = id => {
-    if (!elements.has(id)) {
-      elements.set(id, {
-        id, value: id === 'category' ? 'all' : id === 'quoteQty' ? '10' : '',
-        hidden: false, innerHTML: '', textContent: '',
-        classList: { add() {}, remove() {} },
-        scrollIntoView() {}, focus() {}, reset() {},
-        addEventListener(type, cb) { listeners[id + ':' + type] = cb; }
-      });
-    }
-    return elements.get(id);
-  };
-  const document = {
-    getElementById: el,
-    addEventListener(type, cb) { listeners[type] = cb; }
-  };
-  class FormDataStub {
-    constructor(form) { this.form = form; }
-    get(key) { return this.form.fields?.[key] ?? ''; }
-  }
-  const context = vm.createContext({
-    document, localStorage: {
-      getItem: k => storage.get(k) ?? null,
-      setItem: (k, v) => storage.set(k, v)
-    },
-    Intl, JSON, Math, Object, Number, String, Date,
-    FormData: FormDataStub, setTimeout() {}
-  });
-  vm.runInContext(script, context, { filename: 'index.html' });
-  return { run: code => vm.runInContext(code, context), el, storage, listeners };
-}
-
-test('staffels op de grenzen: 1, 9, 10, 49, 50, 199, 200', () => {
-  const s = setup();
-  for (const [q, expected] of [[1,0],[9,0],[10,.05],[49,.05],[50,.10],[199,.10],[200,.15]]) {
-    assert.equal(s.run('discount(' + q + ')'), expected, 'aantal ' + q);
-  }
+test('assortiment heeft vijf diktes, drie dichtheden en drie kleuren', () => {
+  assert.deepEqual(C.THICKNESSES, [20,30,40,50,80]);
+  assert.deepEqual(C.DENSITIES, [40,60,80]);
+  assert.deepEqual(C.COLORS.map(x=>x.id), ['zwart','wit','grijs']);
 });
-
-test('producten en productfilter zijn aanwezig', () => {
-  const s = setup();
-  assert.equal(s.run('PRODUCTS.length'), 6);
-  s.el('category').value = 'pallet';
-  s.run('renderProducts()');
-  assert.match(s.el('productGrid').innerHTML, /PL01/);
-  assert.doesNotMatch(s.el('productGrid').innerHTML, /D01/);
+test('selectie valideert dikte dichtheid en kleur', () => {
+  const valid={thickness:50,density:60,color:'grijs',pack:'doos'};
+  assert.equal(C.isComplete(valid),true);
+  assert.equal(C.isComplete({...valid,thickness:25}),false);
+  assert.equal(C.isComplete({...valid,density:100}),false);
+  assert.equal(C.isComplete({...valid,color:'blauw'}),false);
+  assert.equal(C.normalizeSelection({thickness:25,density:500,color:'rood'}).pack,'plaat');
 });
-
-test('winkelmandje toevoegen en optellen met staffelkorting en btw', () => {
-  const s = setup();
-  s.run("add('P01', 10)");
-  assert.equal(s.run("cart['P01']"), 10);
-  assert.equal(s.el('cartCount').textContent, 10);
-  assert.ok(Math.abs(s.run('calc().subtotal') - 228) < 1e-8);
-  assert.ok(Math.abs(s.run('calc().total') - 275.88) < 1e-8);
+test('artikelnummers volgen de gespecificeerde uitvoering', () => {
+  const v={thickness:80,density:40,color:'zwart',pack:'pallet'};
+  assert.equal(C.code(v),'PW-80-40-ZWART-PALLET');
+  assert.match(C.description(v),/80 mm/);
+  assert.match(C.description(v),/Zwart/);
+  assert.equal(C.code({}),null);
 });
-
-test('staffelkorting wordt per productregel berekend', () => {
-  const s = setup();
-  s.run("add('P01', 9); add('P02', 1)");
-  assert.equal(s.run('calc().subtotal'), 254);
+test('materiaalgewicht per m² volgt dikte in meter maal dichtheid in kg/m³', () => {
+  assert.equal(C.massPerSquareMeter({thickness:20,density:40}),0.8);
+  assert.equal(C.massPerSquareMeter({thickness:80,density:80}),6.4);
+  assert.equal(C.massPerSquareMeter({thickness:40,density:60}),2.4);
+  assert.equal(C.massPerSquareMeter({thickness:25,density:60}),null);
 });
-
-test('winkelmandje wordt opgeslagen en hersteld na herladen', () => {
-  const s = setup();
-  s.run("add('D01', 2)");
-  assert.equal(JSON.parse(s.storage.get('zilenz-lab-cart-v2')).D01, 2);
-  s.run("cart = {}; const savedAgain = JSON.parse(localStorage.getItem('zilenz-lab-cart-v2')); cart = savedAgain; renderCart()");
-  assert.equal(s.el('cartCount').textContent, 2);
+test('akoestische keuzehulp claimt geen automatische betere absorptie door dichtheid', () => {
+  const a=C.materialGuidance({thickness:20,density:80});
+  const b=C.materialGuidance({thickness:80,density:40});
+  assert.match(a,/niet automatisch/);
+  assert.match(b,/lagere tonen/);
+  assert.doesNotMatch(a+b,/NRC|αw/);
 });
-
-test('aantal kan omlaag en producten kunnen verwijderd worden', () => {
-  const s = setup();
-  s.run("add('P01', 2)");
-  s.listeners.click({target: {closest: () => ({dataset: {minus: 'P01'}})}});
-  assert.equal(s.run("cart['P01']"), 1);
-  s.listeners.click({target: {closest: () => ({dataset: {remove: 'P01'}})}});
-  assert.equal(s.run("Object.keys(cart).length"), 0);
+test('aantal valideert 1 tot 9999 en weigert decimalen', () => {
+  for(const v of [0,-1,1.5,10000,'',null]) assert.equal(C.quantity(v),null);
+  assert.equal(C.quantity('10'),10);
+  assert.equal(C.quantity(9999),9999);
 });
-
-test('checkout blokkeert een leeg winkelmandje', () => {
-  const s = setup();
-  s.el('checkoutForm').fields = { name: 'Testklant' };
-  s.el('checkoutForm').onsubmit({ preventDefault() {}, target: s.el('checkoutForm') });
-  assert.match(s.el('orderResult').textContent, /Voeg eerst minimaal één product/);
+test('offerte verzamelt uitvoeringen, telt identieke regels en scheidt kleur', () => {
+  const a={thickness:50,density:60,color:'wit',pack:'doos'};
+  const b={...a,color:'zwart'};
+  let cart=C.addToCart([],a,2);
+  cart=C.addToCart(cart,a,3);
+  cart=C.addToCart(cart,b,1);
+  assert.equal(cart.length,2);
+  assert.equal(cart[0].quantity,5);
+  assert.equal(cart[1].quantity,1);
 });
-
-test('fictieve checkout geeft bevestiging en leegt het mandje', () => {
-  const s = setup();
-  s.run("add('D02', 2)");
-  s.el('checkoutForm').fields = { name: 'Testklant', email: 'test@example.com' };
-  s.el('checkoutForm').onsubmit({ preventDefault() {}, target: s.el('checkoutForm') });
-  assert.match(s.el('orderResult').textContent, /Voorbeeldbestelling CONCEPT-/);
-  assert.match(s.el('orderResult').textContent, /niets verzonden of betaald/);
-  assert.equal(s.run('Object.keys(cart).length'), 0);
-  assert.equal(s.el('cartCount').textContent, 0);
+test('offerte limiteert samenvoeging tot 9999 en negeert ongeldige data', () => {
+  const v={thickness:20,density:40,color:'grijs',pack:'plaat'};
+  const cart=C.addToCart(C.addToCart([],v,9998),v,10);
+  assert.equal(cart[0].quantity,9999);
+  assert.equal(C.addToCart([],v,0).length,0);
+  assert.equal(C.addToCart([],{...v,color:'rood'},3).length,0);
 });
-
-test('offertecalculator toont staffelkorting en verstuurt niets', () => {
-  const s = setup();
-  s.el('quoteProduct').value = 'PL01';
-  s.el('quoteQty').value = '50';
-  s.el('quoteForm').onsubmit({ preventDefault() {} });
-  assert.match(s.el('quoteResult').textContent, /10%/);
-  assert.match(s.el('quoteResult').textContent, /vrijblijvende berekening/);
+test('opgeslagen offerte wordt veilig ingelezen', () => {
+  assert.deepEqual(C.sanitizeCart({bad:true}),[]);
+  const rows=C.sanitizeCart([null,{thickness:40,density:60,color:'wit',pack:'plaat',quantity:2},{thickness:40,density:60,color:'wit',pack:'plaat',quantity:3},{thickness:99,density:60,color:'wit',pack:'plaat',quantity:4}]);
+  assert.equal(rows.length,1);
+  assert.equal(rows[0].quantity,5);
 });
-
-test('m² berekening is correct voor plaat, doos en pallet', () => {
-  const s=setup();
-  assert.ok(Math.abs(s.run("sqmPerUnit(getProduct('P01'))")-.72)<1e-9);
-  assert.ok(Math.abs(s.run("sqmPerUnit(getProduct('D01'))")-7.2)<1e-9);
-  assert.ok(Math.abs(s.run("sqmPerUnit(getProduct('PL01'))")-72)<1e-9);
-  assert.ok(Math.abs(s.run("sqmPrice(getProduct('P01'))")-(24/.72))<1e-9);
+test('deelbare link herstelt de gekozen variant', () => {
+  const selected={thickness:50,density:80,color:'zwart',pack:'pallet'};
+  const url=C.writeQuery(selected,'?utm_source=search');
+  assert.match(url,/utm_source=search/);
+  assert.deepEqual(C.readQuery(url),selected);
 });
-test('offerte toont korting, m², btw en reset', () => {
-  const s=setup();s.el('quoteProduct').value='D01';s.el('quoteQty').value='50';
-  s.el('quoteForm').onsubmit({preventDefault(){}});
-  assert.match(s.el('quoteBreakdown').innerHTML,/360/);
-  assert.match(s.el('quoteBreakdown').innerHTML,/10%/);
-  assert.match(s.el('quoteBreakdown').innerHTML,/Btw 21%/);
-  s.el('quoteReset').onclick();
-  assert.equal(s.el('quoteBreakdown').hidden,true);
-});
-test('offerte-aantal toevoegen aan mandje en ongeldige aantallen weigeren', () => {
-  const s=setup();s.el('quoteProduct').value='D02';s.el('quoteQty').value='10';
-  s.el('quoteAdd').onclick();assert.equal(s.run("cart['D02']"),10);
-  s.el('quoteQty').value='0';s.el('quoteAdd').onclick();assert.equal(s.run("cart['D02']"),10);
-});
-
-test('productteksten en navigatie zijn professioneel geformuleerd',()=>{const s=setup();assert.match(s.el('productGrid').innerHTML,/Polyesterwol/);assert.doesNotMatch(s.el('productGrid').innerHTML,/Demoproduct|Testproduct|Fictief voorbeeld/);});
