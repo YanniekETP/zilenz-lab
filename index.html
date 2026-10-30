@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zilenz Lab | Testwebshop</title>
+<style>
+:root{font-family:Inter,Arial,sans-serif;color:#171c19;background:#f7f8f5}*{box-sizing:border-box}body{margin:0}
+.banner{background:#d5fa76;color:#152015;text-align:center;padding:12px 18px;font-size:12px;font-weight:800;letter-spacing:.08em}
+header{display:flex;align-items:center;justify-content:space-between;padding:20px max(5vw,20px);background:#fff;border-bottom:1px solid #e7e9e5;gap:20px}
+.logo{font-weight:900;font-size:28px;letter-spacing:-1.5px}.logo em{color:#739b28;font-style:normal}.logo small{font-size:11px;letter-spacing:0;color:#777}
+nav{display:flex;gap:25px;font-size:14px;color:#545d54}button{cursor:pointer;border:0;border-radius:6px;padding:13px 19px;font-weight:700;background:#1c2620;color:#fff}
+button.secondary{background:#e9eee5;color:#253022}.container{max-width:1160px;margin:auto;padding:0 24px}
+.hero{padding:85px 0 70px;display:grid;grid-template-columns:1.25fr .75fr;align-items:center;gap:60px}
+.kicker{text-transform:uppercase;color:#6b9022;font-size:12px;font-weight:800;letter-spacing:.14em}
+h1{font-size:clamp(42px,6vw,72px);line-height:1.02;letter-spacing:-.06em;margin:18px 0}h2{font-size:34px;letter-spacing:-.04em}
+p{color:#5b665b;line-height:1.7}.hero p{font-size:17px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.art{height:360px;border-radius:16px;background:linear-gradient(135deg,#dfe8d5,#a1b29b);display:grid;place-items:center;overflow:hidden}
+.slab{width:185px;height:238px;background:repeating-linear-gradient(105deg,#d6e2d2 0 12px,#adc0ab 13px 18px);box-shadow:24px 25px #859c80,36px 40px 35px #53664b55;transform:rotate(-8deg)}
+.note{padding:15px 20px;background:#fff9db;border-left:4px solid #d1a932;font-size:13px;color:#655622}
+section.products{padding:62px 0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:#fff;border:1px solid #e3e7e0;border-radius:12px;overflow:hidden}.pic{height:175px;background:#e7eee5;display:grid;place-items:center}.pic .slab{width:95px;height:112px;box-shadow:11px 13px #859c80}
+.info{padding:22px}.info h3{font-size:19px}.tag{font-size:11px;font-weight:800;background:#ebf3df;padding:6px 9px;border-radius:3px}.price{font-weight:800;font-size:20px;margin:20px 0}.info button{width:100%}
+.business{background:#19251e;color:#fff;padding:45px;border-radius:13px;display:flex;align-items:center;justify-content:space-between;gap:30px;margin:35px 0 60px}.business p{color:#c2d0c3}.business button{background:#d5fa76;color:#162219;white-space:nowrap}
+footer{padding:35px 0;color:#778077;font-size:12px}.cart{position:fixed;right:20px;bottom:20px;background:white;padding:23px;border:1px solid #d9dfd5;border-radius:10px;box-shadow:0 15px 50px #0003;display:none;max-width:320px;z-index:5}
+@media(max-width:760px){nav{display:none}.hero{grid-template-columns:1fr;padding:45px 0}.art{height:240px}.grid{grid-template-columns:1fr}.business{display:block}.business button{margin-top:12px}}
+</style></head><body>
+<div class="banner">TESTOMGEVING · FICTIEVE PRODUCTEN · GEEN ECHTE BESTELLINGEN · LOS VAN ZILENZ.NL</div>
+<header><div class="logo">zilen<em>z.</em> <small>LAB</small></div><nav><span>Producten</span><span>Zakelijk</span><span>Over ons</span></nav><button class="secondary" id="openCart">Testmandje (<span id="count">0</span>)</button></header>
+<main class="container"><div class="hero"><div><div class="kicker">Akoestisch materiaal voor professionals</div><h1>Rust begint bij het juiste materiaal.</h1><p>Een nieuwe zakelijke bestelervaring voor polyesterwol en akoestische isolatie. Test productpagina's, dozen en grotere hoeveelheden zonder gevolgen voor de echte webshop.</p><div class="actions"><button onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Bekijk testproducten</button><button class="secondary" onclick="alert('Demo: er wordt geen aanvraag verzonden.')">Test offerteaanvraag</button></div></div><div class="art"><div class="slab"></div></div></div>
+<div class="note">Alle getoonde producten, prijzen en maten zijn uitsluitend voorbeelden. Deze website verwerkt geen betalingen, persoonsgegevens of bestellingen.</div>
+<section id="products" class="products"><div class="kicker">Assortiment / demo</div><h2>Materialen voor ieder project</h2><div class="grid" id="grid"></div></section>
+<div class="business"><div><div class="kicker" style="color:#d5fa76">Zakelijk bestellen</div><h2>Grotere aantallen of palletafname?</h2><p>Probeer de toekomstige route voor offertes, staffelprijzen en herhaalbestellingen.</p></div><button onclick="alert('Demofunctie: er wordt geen offerte verstuurd.')">Test offerteknop</button></div>
+<footer>Zilenz Lab · afzonderlijke demonstratie · geen verbinding met de live webshop</footer>
+</main><div class="cart" id="cart"><strong>Testwinkelmandje</strong><p id="cartItems">Nog leeg.</p><button class="secondary" onclick="document.getElementById('cart').style.display='none'">Sluiten</button> <button onclick="alert('Afrekenen staat uit in dit prototype.')">Test afrekenen</button></div>
+<script>
+const products=[{name:'Polyesterwol paneel',unit:'Per plaat',price:'€ 24,00',tag:'Demoproduct'},{name:'Polyesterwol doos',unit:'Per doos',price:'€ 159,00',tag:'Zakelijk'},{name:'Polyesterwol pallet',unit:'Per pallet',price:'Op aanvraag',tag:'Volumeafname'}];
+let cart=[];
+document.getElementById('grid').innerHTML=products.map((p,i)=>'<article class="card"><div class="pic"><div class="slab"></div></div><div class="info"><span class="tag">'+p.tag+'</span><h3>'+p.name+'</h3><p>'+p.unit+' · fictief testproduct</p><div class="price">'+p.price+'</div><button data-add="'+i+'">Toevoegen aan testmandje</button></div></article>').join('');
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{cart.push(products[Number(b.dataset.add)].name);render();document.getElementById('cart').style.display='block'});
+document.getElementById('openCart').onclick=()=>{document.getElementById('cart').style.display='block'};
+function render(){document.getElementById('count').textContent=cart.length;document.getElementById('cartItems').textContent=cart.length?cart.join(' · '):'Nog leeg.'}
+</script></body></html>
