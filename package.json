@@ -1,0 +1,13 @@
+{
+  "name": "zilenz-lab",
+  "private": true,
+  "version": "2.2.0",
+  "description": "Fictieve testwebshop met geautomatiseerde controles",
+  "scripts": {
+    "test": "node --test tests/shop.test.cjs",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
