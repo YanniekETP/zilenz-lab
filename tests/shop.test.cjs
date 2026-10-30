@@ -96,7 +96,7 @@ test('aantal kan omlaag en producten kunnen verwijderd worden', () => {
 test('checkout blokkeert een leeg winkelmandje', () => {
   const s = setup();
   s.el('checkoutForm').fields = { name: 'Testklant' };
-  s.el('checkoutForm').onsubmit({ preventDefault() {} });
+  s.el('checkoutForm').onsubmit({ preventDefault() {}, target: s.el('checkoutForm') });
   assert.match(s.el('orderResult').textContent, /Voeg eerst minimaal één product/);
 });
 
@@ -104,7 +104,7 @@ test('fictieve checkout geeft bevestiging en leegt het mandje', () => {
   const s = setup();
   s.run("add('D02', 2)");
   s.el('checkoutForm').fields = { name: 'Testklant', email: 'test@example.com' };
-  s.el('checkoutForm').onsubmit({ preventDefault() {} });
+  s.el('checkoutForm').onsubmit({ preventDefault() {}, target: s.el('checkoutForm') });
   assert.match(s.el('orderResult').textContent, /Testbestelling TEST-/);
   assert.match(s.el('orderResult').textContent, /niets verzonden of betaald/);
   assert.equal(s.run('Object.keys(cart).length'), 0);
