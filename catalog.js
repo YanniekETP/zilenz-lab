@@ -45,6 +45,21 @@
     return 'Polyesterwol ' + n.thickness + ' mm · ' + n.density + ' kg/m³ · ' +
       COLORS.find(c => c.id === n.color).name + ' · ' + PACKS.find(p => p.id === n.pack).name;
   }
+  function massPerSquareMeter(value) {
+    const v = normalizeSelection(value);
+    if (!v.thickness || !v.density) return null;
+    return v.thickness / 1000 * v.density;
+  }
+  function materialGuidance(value) {
+    const v = normalizeSelection(value);
+    if (!v.thickness || !v.density) return 'Kies dikte en dichtheid voor een materiaalindicatie.';
+    const thickness = v.thickness <= 30
+      ? 'Relatief dun: neemt weinig inbouwruimte in.'
+      : v.thickness >= 50
+        ? 'Dikkere laag: kan bij gelijke opbouw ook lagere tonen beter absorberen.'
+        : 'Middeldikke laag: balans tussen inbouwruimte en materiaalvolume.';
+    return thickness + ' Meer dichtheid betekent niet automatisch meer geluidsabsorptie.';
+  }
   function quantity(value) {
     const q = Number(value);
     return Number.isInteger(q) && q >= 1 && q <= MAX_QUANTITY ? q : null;
@@ -94,5 +109,5 @@
   }
   return { THICKNESSES, DENSITIES, COLORS, PACKS, DEFAULT_SELECTION, MAX_QUANTITY,
     normalizeSelection, isComplete, code, description, quantity, makeItem,
-    sanitizeCart, addToCart, readQuery, writeQuery };
+    sanitizeCart, addToCart, readQuery, writeQuery, massPerSquareMeter, materialGuidance };
 });
