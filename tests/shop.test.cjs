@@ -29,10 +29,10 @@ test('materiaalgewicht per m² volgt dikte in meter maal dichtheid in kg/m³', (
   assert.equal(C.massPerSquareMeter({thickness:40,density:60}),2.4);
   assert.equal(C.massPerSquareMeter({thickness:25,density:60}),null);
 });
-test('akoestische keuzehulp claimt geen automatische betere absorptie door dichtheid', () => {
+test('akoestische keuzehulp benoemt materiaalvoordelen zonder akoestische garanties', () => {
   const a=C.materialGuidance({thickness:20,density:80});
   const b=C.materialGuidance({thickness:80,density:40});
-  assert.match(a,/niet automatisch/);
+  assert.match(a,/meer vezelmassa/);
   assert.match(b,/lagere tonen/);
   assert.doesNotMatch(a+b,/NRC|αw/);
 });
