@@ -52,13 +52,36 @@
   }
   function materialGuidance(value) {
     const v = normalizeSelection(value);
-    if (!v.thickness || !v.density) return 'Kies dikte en dichtheid voor een materiaalindicatie.';
-    const thickness = v.thickness <= 30
-      ? 'Relatief dun: neemt weinig inbouwruimte in.'
+    if (!v.thickness || !v.density) return 'Selecteer dikte en dichtheid voor passend productadvies.';
+    const thickness = v.thickness >= 80
+      ? 'Royale absorberende laag: een interessante keuze wanneer ook lagere tonen aandacht vragen en voldoende ruimte beschikbaar is.'
       : v.thickness >= 50
-        ? 'Dikkere laag: kan bij gelijke opbouw ook lagere tonen beter absorberen.'
-        : 'Middeldikke laag: balans tussen inbouwruimte en materiaalvolume.';
-    return thickness + ' Meer dichtheid betekent niet automatisch meer geluidsabsorptie.';
+        ? 'Extra absorptiedikte: een logische stap omhoog voor wie meer breedbandige geluidsabsorptie nastreeft.'
+        : v.thickness >= 40
+          ? 'Veelzijdige middenmaat: een stap boven de dunne basisplaten met meer materiaal in de dikte.'
+          : 'Slanke oplossing voor toepassingen met beperkte inbouwruimte. Meer ruimte? Bekijk ook 50 of 80 mm.';
+    const density = v.density >= 80
+      ? 'Hoogste dichtheidsklasse: meer vezelmassa per m² en een robuustere materiaalkeuze.'
+      : v.density >= 60
+        ? 'Verzwaarde uitvoering: meer vezelmassa per m² dan de 40 kg/m³-variant.'
+        : 'Lichtste dichtheidsklasse: praktisch wanneer materiaalgewicht een rol speelt.';
+    return thickness + ' ' + density;
+  }
+  function upgradeSuggestions(value) {
+    const v = normalizeSelection(value);
+    if (!v.thickness || !v.density) return [];
+    const suggestions = [];
+    if (v.thickness < 80) {
+      const next = THICKNESSES.find(x => x > v.thickness);
+      suggestions.push({ kind:'thickness', target:next, label:'Bekijk ' + next + ' mm', text:'Meer absorberende laag, vooral interessant bij lagere frequenties.' });
+    }
+    if (v.density < 80) {
+      const next = DENSITIES.find(x => x > v.density);
+      suggestions.push({ kind:'density', target:next, label:'Bekijk ' + next + ' kg/m³', text:'Meer vezelmateriaal per m² en een zwaardere uitvoering.' });
+    }
+    if (v.pack === 'plaat') suggestions.push({ kind:'pack', target:'doos', label:'Bekijk dozen', text:'Handige afnamevorm bij meerdere platen en grotere projecten.' });
+    else if (v.pack === 'doos') suggestions.push({ kind:'pack', target:'pallet', label:'Bekijk pallets', text:'Afnamevorm voor grotere projecthoeveelheden.' });
+    return suggestions;
   }
   function quantity(value) {
     const q = Number(value);
@@ -109,5 +132,5 @@
   }
   return { THICKNESSES, DENSITIES, COLORS, PACKS, DEFAULT_SELECTION, MAX_QUANTITY,
     normalizeSelection, isComplete, code, description, quantity, makeItem,
-    sanitizeCart, addToCart, readQuery, writeQuery, massPerSquareMeter, materialGuidance };
+    sanitizeCart, addToCart, readQuery, writeQuery, massPerSquareMeter, materialGuidance, upgradeSuggestions };
 });
