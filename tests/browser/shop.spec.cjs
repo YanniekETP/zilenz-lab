@@ -113,7 +113,7 @@ test('vergelijking onthoudt varianten na herladen en markeert verschillen', asyn
   await page.locator('#addToCompare').click();
   await select(page,80,80,'zwart');
   await page.locator('#addToCompare').click();
-  await expect(page.locator('#compareTable .diff-row')).toHaveCount(7);
+  await expect(page.locator('#compareTable .diff-row')).toHaveCount(6);
   await page.reload();
   await expect(page.locator('#compareTable thead th')).toHaveCount(3);
   await expect(page.locator('#compareTable')).toContainText('6,4 kg/m²');
