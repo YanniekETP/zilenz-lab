@@ -105,7 +105,7 @@ test('fictieve checkout geeft bevestiging en leegt het mandje', () => {
   s.run("add('D02', 2)");
   s.el('checkoutForm').fields = { name: 'Testklant', email: 'test@example.com' };
   s.el('checkoutForm').onsubmit({ preventDefault() {}, target: s.el('checkoutForm') });
-  assert.match(s.el('orderResult').textContent, /Testbestelling TEST-/);
+  assert.match(s.el('orderResult').textContent, /Voorbeeldbestelling CONCEPT-/);
   assert.match(s.el('orderResult').textContent, /niets verzonden of betaald/);
   assert.equal(s.run('Object.keys(cart).length'), 0);
   assert.equal(s.el('cartCount').textContent, 0);
@@ -117,7 +117,7 @@ test('offertecalculator toont staffelkorting en verstuurt niets', () => {
   s.el('quoteQty').value = '50';
   s.el('quoteForm').onsubmit({ preventDefault() {} });
   assert.match(s.el('quoteResult').textContent, /10%/);
-  assert.match(s.el('quoteResult').textContent, /Niets verzonden/);
+  assert.match(s.el('quoteResult').textContent, /vrijblijvende berekening/);
 });
 
 test('m² berekening is correct voor plaat, doos en pallet', () => {
@@ -132,7 +132,7 @@ test('offerte toont korting, m², btw en reset', () => {
   s.el('quoteForm').onsubmit({preventDefault(){}});
   assert.match(s.el('quoteBreakdown').innerHTML,/360/);
   assert.match(s.el('quoteBreakdown').innerHTML,/10%/);
-  assert.match(s.el('quoteBreakdown').innerHTML,/Fictieve btw 21%/);
+  assert.match(s.el('quoteBreakdown').innerHTML,/Btw 21%/);
   s.el('quoteReset').onclick();
   assert.equal(s.el('quoteBreakdown').hidden,true);
 });
@@ -141,3 +141,5 @@ test('offerte-aantal toevoegen aan mandje en ongeldige aantallen weigeren', () =
   s.el('quoteAdd').onclick();assert.equal(s.run("cart['D02']"),10);
   s.el('quoteQty').value='0';s.el('quoteAdd').onclick();assert.equal(s.run("cart['D02']"),10);
 });
+
+test('productteksten en navigatie zijn professioneel geformuleerd',()=>{const s=setup();assert.match(s.el('productGrid').innerHTML,/Polyesterwol/);assert.doesNotMatch(s.el('productGrid').innerHTML,/Demoproduct|Testproduct|Fictief voorbeeld/);});
