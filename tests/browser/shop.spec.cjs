@@ -70,3 +70,29 @@ test('mobiele navigatie blijft zichtbaar', async ({ page }) => {
   await page.locator('.nav a[href="#zakelijk"]').click();
   await expect(page).toHaveURL(/#zakelijk$/);
 });
+
+test('productkaarten tonen m² prijs, verpakking en vier staffels', async ({page}) => {
+  const card=page.locator('#productGrid .card').filter({hasText:'Polyesterwol doos 50 mm'});
+  await expect(card.locator('.sqm-price')).toContainText('/ m²');
+  await expect(card.locator('.pack-info')).toContainText('10 platen per doos');
+  await expect(card.locator('.tiers .tier')).toHaveCount(4);
+});
+test('offerte rekent doosoppervlak uit en kan aantallen toevoegen aan mandje', async ({page}) => {
+  await page.locator('#quoteProduct').selectOption('D01');
+  await expect(page.locator('#quotePackInfo')).toContainText('7,2 m²');
+  await page.locator('#quoteQty').fill('50');
+  await page.locator('#quoteForm button[type=submit]').click();
+  await expect(page.locator('#quoteBreakdown')).toContainText('360 m²');
+  await expect(page.locator('#quoteBreakdown')).toContainText('10%');
+  await expect(page.locator('#quoteBreakdown')).toContainText('Fictieve btw 21%');
+  await page.locator('#quoteAdd').click();
+  await expect(page.locator('#cartCount')).toHaveText('50');
+  await page.locator('#quoteReset').click();
+  await expect(page.locator('#quoteBreakdown')).toBeHidden();
+});
+test('offerte valideert hoeveelheid zonder echte aanvraag te versturen', async ({page}) => {
+  await page.locator('#quoteQty').fill('10000');
+  await page.locator('#quoteAdd').click();
+  await expect(page.locator('#quoteResult')).toContainText('geldig aantal');
+  await expect(page.locator('#cartCount')).toHaveText('0');
+});
