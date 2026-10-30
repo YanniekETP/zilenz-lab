@@ -84,7 +84,7 @@ test('offerte rekent doosoppervlak uit en kan aantallen toevoegen aan mandje', a
   await page.locator('#quoteForm button[type=submit]').click();
   await expect(page.locator('#quoteBreakdown')).toContainText('360 m²');
   await expect(page.locator('#quoteBreakdown')).toContainText('10%');
-  await expect(page.locator('#quoteBreakdown')).toContainText('Fictieve btw 21%');
+  await expect(page.locator('#quoteBreakdown')).toContainText('Btw 21%');
   await page.locator('#quoteAdd').click();
   await expect(page.locator('#cartCount')).toHaveText('50');
   await page.locator('#quoteReset').click();
@@ -96,3 +96,5 @@ test('offerte valideert hoeveelheid zonder echte aanvraag te versturen', async (
   await expect(page.locator('#quoteResult')).toContainText('geldig aantal');
   await expect(page.locator('#cartCount')).toHaveText('0');
 });
+
+test('zakelijke homepage gebruikt productgerichte teksten en één discrete testmelding', async ({page}) => { await expect(page.locator('h1')).toContainText('Akoestische isolatie'); await expect(page.locator('.env-note')).toHaveCount(1); await expect(page.locator('.banner')).not.toContainText('FICTIEVE'); await expect(page.locator('.logo')).not.toContainText('LAB'); });
