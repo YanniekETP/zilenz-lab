@@ -119,3 +119,25 @@ test('offertecalculator toont staffelkorting en verstuurt niets', () => {
   assert.match(s.el('quoteResult').textContent, /10%/);
   assert.match(s.el('quoteResult').textContent, /Niets verzonden/);
 });
+
+test('m² berekening is correct voor plaat, doos en pallet', () => {
+  const s=setup();
+  assert.ok(Math.abs(s.run("sqmPerUnit(getProduct('P01'))")-.72)<1e-9);
+  assert.ok(Math.abs(s.run("sqmPerUnit(getProduct('D01'))")-7.2)<1e-9);
+  assert.ok(Math.abs(s.run("sqmPerUnit(getProduct('PL01'))")-72)<1e-9);
+  assert.ok(Math.abs(s.run("sqmPrice(getProduct('P01'))")-(24/.72))<1e-9);
+});
+test('offerte toont korting, m², btw en reset', () => {
+  const s=setup();s.el('quoteProduct').value='D01';s.el('quoteQty').value='50';
+  s.el('quoteForm').onsubmit({preventDefault(){}});
+  assert.match(s.el('quoteBreakdown').innerHTML,/360/);
+  assert.match(s.el('quoteBreakdown').innerHTML,/10%/);
+  assert.match(s.el('quoteBreakdown').innerHTML,/Fictieve btw 21%/);
+  s.el('quoteReset').onclick();
+  assert.equal(s.el('quoteBreakdown').hidden,true);
+});
+test('offerte-aantal toevoegen aan mandje en ongeldige aantallen weigeren', () => {
+  const s=setup();s.el('quoteProduct').value='D02';s.el('quoteQty').value='10';
+  s.el('quoteAdd').onclick();assert.equal(s.run("cart['D02']"),10);
+  s.el('quoteQty').value='0';s.el('quoteAdd').onclick();assert.equal(s.run("cart['D02']"),10);
+});
