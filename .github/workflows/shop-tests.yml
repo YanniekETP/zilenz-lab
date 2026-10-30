@@ -1,7 +1,7 @@
 name: Zilenz Lab tests
 on:
   push:
-    branches: [main, 'test/**']
+    branches: [main, 'test/**', 'feature/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -15,5 +15,27 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run webshop tests
+      - name: Run unit tests
         run: node --test tests/shop.test.cjs
+  browser-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start local test site
+        run: python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/zilenz-http.log 2>&1 &
+      - name: Run browser tests
+        run: npx playwright test
+      - name: Upload browser report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
