@@ -29,10 +29,10 @@ test('materiaalgewicht per m² volgt dikte in meter maal dichtheid in kg/m³', (
   assert.equal(C.massPerSquareMeter({thickness:40,density:60}),2.4);
   assert.equal(C.massPerSquareMeter({thickness:25,density:60}),null);
 });
-test('akoestische keuzehulp claimt geen automatische betere absorptie door dichtheid', () => {
+test('akoestische keuzehulp benoemt materiaalvoordelen zonder akoestische garanties', () => {
   const a=C.materialGuidance({thickness:20,density:80});
   const b=C.materialGuidance({thickness:80,density:40});
-  assert.match(a,/niet automatisch/);
+  assert.match(a,/meer vezelmassa/);
   assert.match(b,/lagere tonen/);
   assert.doesNotMatch(a+b,/NRC|αw/);
 });
@@ -69,4 +69,20 @@ test('deelbare link herstelt de gekozen variant', () => {
   const url=C.writeQuery(selected,'?utm_source=search');
   assert.match(url,/utm_source=search/);
   assert.deepEqual(C.readQuery(url),selected);
+});
+
+test('koopadvies benoemt voordelen van meer dikte en vezelmassa zonder onbewezen absorptiescores', () => {
+  const C = require('../catalog.js');
+  const thin = C.materialGuidance({ thickness:20, density:40 });
+  const premium = C.materialGuidance({ thickness:80, density:80 });
+  assert.match(thin, /Bekijk ook 50 of 80 mm/);
+  assert.match(premium, /lagere tonen/);
+  assert.match(premium, /meer vezelmassa/);
+  assert.doesNotMatch(thin+premium, /garandeert|meer decibel|NRC/);
+});
+test('upgradeopties komen uit echte beschikbare diktes en dichtheden', () => {
+  const C = require('../catalog.js');
+  const options = C.upgradeSuggestions({thickness:40,density:60,color:'grijs',pack:'plaat'});
+  assert.deepEqual(options.map(x => x.target),[50,80,'doos']);
+  assert.deepEqual(C.upgradeSuggestions({thickness:80,density:80,color:'wit',pack:'pallet'}),[]);
 });

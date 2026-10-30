@@ -46,6 +46,16 @@
     options('colorOptions', 'color', C.COLORS, v => v.name);
     options('packOptions', 'pack', C.PACKS, v => v.name);
   }
+  function renderUpgrades() {
+    const items = C.upgradeSuggestions(selection);
+    $('upgradeIntro').textContent = items.length
+      ? 'Ontdek de voordelen van een volgende uitvoering.'
+      : 'Kies dikte en dichtheid om de mogelijkheden te bekijken.';
+    $('upgradeOptions').innerHTML = items.map(item =>
+      '<button type="button" class="upgrade-choice" data-upgrade-kind="' + item.kind +
+      '" data-upgrade-target="' + item.target + '"><strong>' + item.label +
+      '</strong><small>' + item.text + '</small></button>').join('');
+  }
   function renderSummary() {
     $('summaryThickness').textContent = selection.thickness ? selection.thickness + ' mm' : 'Nog kiezen';
     $('summaryDensity').textContent = selection.density ? selection.density + ' kg/m³' : 'Nog kiezen';
@@ -61,7 +71,7 @@
     else if (qty === null) setStatus('selectionFeedback', 'Kies een geheel aantal van 1 tot en met 9999.');
     else setStatus('selectionFeedback', 'Klaar om te vergelijken of aan je offerteoverzicht toe te voegen.');
   }
-  function renderSelection() { renderOptions(); renderSummary(); }
+  function renderSelection() { renderOptions(); renderSummary(); renderUpgrades(); }
   function setSelection(key, value) {
     const input = { ...selection, [key]: value };
     selection = C.normalizeSelection(input);
@@ -121,6 +131,11 @@
     const button = e.target.closest('button');
     if (!button) return;
     const d = button.dataset;
+    if (d.upgradeKind) {
+      const value = ['thickness','density'].includes(d.upgradeKind) ? Number(d.upgradeTarget) : d.upgradeTarget;
+      setSelection(d.upgradeKind, value);
+      setStatus('selectionFeedback', 'Uitvoering bijgewerkt. Bekijk de nieuwe specificatie en voeg deze toe aan je offerte.');
+    }
     if (d.pick) {
       const value = ['thickness','density'].includes(d.pick) ? Number(d.value) : d.value;
       setSelection(d.pick, value);
